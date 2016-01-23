@@ -1,0 +1,10 @@
+
+# CMake output files
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+/Makefile
+
+# build targets
+/cashcontrol.elf
+/cashcontrol.hex
