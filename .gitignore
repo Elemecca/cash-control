@@ -8,3 +8,6 @@
 # build targets
 /cashcontrol.elf
 /cashcontrol.hex
+
+# EagleCAD backup files
+/hardware/*#?
