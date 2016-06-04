@@ -6,7 +6,7 @@
 /Makefile
 
 # build targets
-/cashcontrol.elf
+/cashcontrol
 /cashcontrol.hex
 
 # EagleCAD backup files
