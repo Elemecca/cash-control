@@ -6,8 +6,17 @@ set(CMAKE_TOOLCHAIN_FILE CMake/toolchain-xc16.cmake)
 
 project(cashcontrol C)
 
+add_compile_options(-std=c99)
 
 add_executable(${CMAKE_PROJECT_NAME}
     src/main.c
 )
 bin2hex(${CMAKE_PROJECT_NAME})
+
+
+add_custom_target(flash
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMAND ipecmd -P${XC16_CPU_MODEL} -TPICD3 -F${CMAKE_PROJECT_NAME}.hex -M -OL
+    VERBATIM
+    COMMENT Flashing to target device
+)
