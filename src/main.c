@@ -1,6 +1,10 @@
 
 #include <xc.h>
 
+#include "usb.h"
+#include "usb_hid.h"
+#include "usb_config.h"
+
 #ifdef __PIC24FJ32GB002__
     // start up with the FRC oscillator configured for USB
     // this results in a 32 MHz system clock at startup
@@ -32,38 +36,38 @@ struct {
     char buffer [U1TXBUF_LEN];
     int write;
     int read;
-} u1txbuf = { {}, 0, 0 };
+} logbuf = { {}, 0, 0 };
 
 void ISR _U1TXInterrupt (void) {
     int next;
 
     _U1TXIF = 0;
 
-    while (!U1STAbits.UTXBF && u1txbuf.read != u1txbuf.write) {
-        U1TXREG = u1txbuf.buffer[ u1txbuf.read ];
+    while (!U1STAbits.UTXBF && logbuf.read != logbuf.write) {
+        U1TXREG = logbuf.buffer[ logbuf.read ];
 
-        next = u1txbuf.read + 1;
+        next = logbuf.read + 1;
         if (next >= U1TXBUF_LEN) next = 0;
-        u1txbuf.read = next;
+        logbuf.read = next;
     }
 }
 
-void u1_write (const char const *message) {
+void logger (const char const *message) {
     int next;
 
     const char *character = message;
     while (*character != '\0') {
-        if (!U1STAbits.UTXBF && u1txbuf.read == u1txbuf.write) {
+        if (!U1STAbits.UTXBF && logbuf.read == logbuf.write) {
             U1TXREG = *character;
-        } else if (u1txbuf.write == u1txbuf.read - 1) {
+        } else if (logbuf.write == logbuf.read - 1) {
             // the ring buffer is full
             break;
         } else {
-            u1txbuf.buffer[ u1txbuf.write ] = *character;
+            logbuf.buffer[ logbuf.write ] = *character;
 
-            next = u1txbuf.write + 1;
-            if (u1txbuf.write >= U1TXBUF_LEN) next = 0;
-            u1txbuf.write = next;
+            next = logbuf.write + 1;
+            if (logbuf.write >= U1TXBUF_LEN) next = 0;
+            logbuf.write = next;
         }
 
         character++;
@@ -71,11 +75,6 @@ void u1_write (const char const *message) {
 }
 
 int main (void) {
-    // configure RB0 for a flashing LED
-    _TRISB0 = 0;
-    _ODB0   = 0;
-    _LATB0 = 1;
-
     // configure UART1
     _U1RXR = 1; // U1RX = RP1
     _RP2R  = 3; // U1TX = RP2
@@ -86,20 +85,19 @@ int main (void) {
     U1STAbits.UTXISEL1 = 1; // interrupt on tx FIFO empty
     _U1TXIE = 1; // enable tx interrupt
     _U1RXIE = 0; // disable rx interrupt
-
-    // enable the UART
     U1MODEbits.UARTEN = 1;
     U1STAbits.UTXEN = 1;
 
-    T2CONbits.TCKPS = 0x3; // prescale 1:256
-    T2CONbits.TON = 1;
-    while (1) {
-        _LATB0 = ~_LATB0;
-        u1_write( "Hello, world.\n" );
+    logger("\n********** DEVICE BOOT **********\n");
 
-        // sleep for 1s (16 MHz * 1:256)
-        TMR2 = 0;
-        while (TMR2 < 62500);
-    }
+    // start up the USB stack
+    usb_init();
+    logger("USB initialized\n");
+
+    while (1);
     return 0;
+}
+
+int8_t usb_app_unknown_setup_request_cb (const struct setup_packet *setup) {
+    return process_hid_setup_request( setup );
 }
