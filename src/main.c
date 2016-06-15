@@ -6,20 +6,30 @@
 #include "usb_config.h"
 
 #ifdef __PIC24FJ32GB002__
-    // start up with the FRC oscillator configured for USB
-    // this results in a 32 MHz system clock at startup
-    #pragma config FNOSC = FRCPLL
-    #pragma config PLL96MHZ = ON
-    #pragma config PLLDIV = NODIV // FRC defaults to 4 MHz
+    _CONFIG1( 0xFFFF
+        & JTAGEN_OFF // disable JTAG so we can use its pins for IO
+        & ICS_PGx3   // run the emulator on the normal ICSP port
+        & FWDTEN_OFF // disable the watchdog timer (TODO: for now)
+    )
+    _CONFIG2( 0xFFFF
+        // start up with the FRC oscillator configured for USB
+        // this results in a 32 MHz system clock at startup
+        & FNOSC_FRCPLL
+        & PLL96MHZ_ON
+        & PLLDIV_NODIV // FRC defaults to 4 MHz
 
-    // completely disable the primary (external) oscillator
-    #pragma config POSCMOD = NONE // disable primary oscillator
-    #pragma config IESO = OFF     // disable two-speed startup
-    #pragma config FCKSM = CSDCMD // disable clock switching & monitor
-    #pragma config OSCIOFNC = ON  // OSCO pin functions as IO
-
-    // disable the secondary (external) oscillator
-    #pragma config SOSCSEL = IO
+        // completely disable the primary (external) oscillator
+        & POSCMOD_NONE // disable primary oscillator
+        & IESO_OFF     // disable two-speed startup
+        & FCKSM_CSDCMD // disable clock switching & monitor
+        & OSCIOFNC_ON  // OSCO pin functions as IO
+    )
+    _CONFIG3( 0xFFFF
+        & SOSCSEL_IO // disable the secondary (external) oscillator
+    )
+    _CONFIG4( 0xFFFF
+        & RTCOSC_LPRC // use the LPRC for the RTCC as the SOSC is off
+    )
 #else
     #error "unsupported MCU model"
 #endif
