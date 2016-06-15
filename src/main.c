@@ -1,5 +1,6 @@
 
 #include <xc.h>
+#include <stdint.h>
 
 #include "usb.h"
 #include "usb_hid.h"
@@ -84,10 +85,23 @@ void logger (const char const *message) {
     }
 }
 
+
+void ISR _SPI1Interrupt (void) {
+    _SPI1IF = 0;
+
+    uint16_t time = TMR5;
+    TMR5 = 0;
+
+    uint8_t read = SPI1BUF;
+
+    char msg[1024];
+    snprintf(msg, 1024, "%06u: %02X\n", time, read);
+    logger(msg);
+}
+
 int main (void) {
-    // configure UART1
-    _U1RXR = 1; // U1RX = RP1
-    _RP2R  = 3; // U1TX = RP2
+    // configure UART1 for logging
+    _RP0R = 3; // U1TX = RP0
     U1MODEbits.PDSEL = 0; // 8 bits, no parity
     U1MODEbits.STSEL = 0; // 1 stop bit
     U1MODEbits.BRGH  = 1; // high baud rate mode
@@ -99,6 +113,26 @@ int main (void) {
     U1STAbits.UTXEN = 1;
 
     logger("\n********** DEVICE BOOT **********\n");
+
+    // configure SPI1 for display bus
+    _SS1R  = 9; // SSI = RP9
+    _SCK1R = 8; // SCK = RP8
+    _SDI1R = 7; // SDI = RP7
+    SPI1CON1bits.CKP    = 1; // clock idle high
+    SPI1CON1bits.CKE    = 1;
+    SPI1CON1bits.SSEN   = 1; // enable slave select
+    SPI1CON1bits.DISSDO = 1; // disable the output pin for now
+    SPI1CON2bits.SPIBEN = 0; // enable enhanced buffer mode
+    _SPI1IE = 1; // enable interrupt
+    SPI1STATbits.SPIEN  = 1;
+    logger("SPI bus initialized\n");
+
+    // configure Timer5 to measure SS high time
+    _T5CKR = _SS1R; // gate on SPI1 Slave Select
+    _T5IE = 0; // disable interrupt
+    T5CONbits.TGATE = 1; // gated timer mode
+    T5CONbits.TON = 1;
+    logger("TMR5 inited for SS timing\n");
 
     // start up the USB stack
     usb_init();
