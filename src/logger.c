@@ -55,6 +55,8 @@ void logger_init (void) {
     U1MODEbits.BRGH  = 1; // high baud rate mode
     U1BRG = 34; // ~ 115200 bps (actually 114285.7, 0.8% error)
     U1STAbits.UTXISEL1 = 1; // interrupt on tx FIFO empty
+    _U1TXIF = 0;
+    _U1TXIP = 0;
     _U1TXIE = 1; // enable tx interrupt
     _U1RXIE = 0; // disable rx interrupt
     U1MODEbits.UARTEN = 1;
