@@ -10,6 +10,8 @@ find_package(MStack)
 
 add_executable(${CMAKE_PROJECT_NAME}
     src/main.c
+    src/logger.c
+    src/display.c
     src/usb_descriptors.c
 )
 
