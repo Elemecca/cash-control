@@ -1,3 +1,6 @@
 [submodule "external/m-stack"]
 	path = external/m-stack
 	url = git://github.com/signal11/m-stack.git
+[submodule "external/cmake-microchip"]
+	path = external/cmake-microchip
+	url = git://github.com/Elemecca/cmake-microchip.git
