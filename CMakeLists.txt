@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 2.8)
-
-list(APPEND CMAKE_MODULE_PATH
-    "${CMAKE_CURRENT_SOURCE_DIR}/external/cmake-microchip/Modules"
-)
+cmake_minimum_required(VERSION 3.5)
 
 # set up the Microchip cross toolchain
-set(CMAKE_TOOLCHAIN_FILE external/cmake-microchip/Toolchains/xc16.cmake)
+set(CMAKE_TOOLCHAIN_FILE external/cmake-microchip/toolchain.cmake)
+
+# set the default MCU model
+set(MICROCHIP_MCU PIC24FJ32GB002)
 
 project(cashcontrol C)
 
@@ -33,7 +32,7 @@ bin2hex(${CMAKE_PROJECT_NAME})
 
 add_custom_target(flash
     DEPENDS ${CMAKE_PROJECT_NAME}
-    COMMAND ipecmd -P${XC16_CPU_MODEL} -TPICD3 -F${CMAKE_PROJECT_NAME}.hex -M -OL
+    COMMAND ipecmd -P${MICROCHIP_MCU_MODEL} -TPICD3 -F${CMAKE_PROJECT_NAME}.hex -M -OL
     VERBATIM
     COMMENT Flashing to target device
 )
